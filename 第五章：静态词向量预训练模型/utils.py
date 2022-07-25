@@ -48,7 +48,7 @@ def load_pretrained(load_path):
 
 
     with open(load_path,'r') as fin:
-        n,d = map(int,fin.readline().split())
+        #n,d = map(int,fin.readline().split())
         tokens = []
         embeds = []
         for line in fin:

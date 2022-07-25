@@ -1,4 +1,4 @@
-# @Time : 2022-07-22 21:09
+# @Time : 2022-07-23 16:04
 # @Author : Phalange
 # @File : utils.py
 # @Software: PyCharm
@@ -6,18 +6,17 @@
 
 
 import torch
-from torch.utils.data import DataLoader,Dataset
-from Vocab import Vocab
+from torch.utils.data import Dataset, DataLoader
+from vocab import Vocab
 
+# Constants
 BOS_TOKEN = "<bos>"
 EOS_TOKEN = "<eos>"
 PAD_TOKEN = "<pad>"
 BOW_TOKEN = "<bow>"
 EOW_TOKEN = "<eow>"
 
-
 WEIGHT_INIT_RANGE = 0.1
-
 
 def load_reuters():
     from nltk.corpus import reuters
@@ -29,55 +28,46 @@ def load_reuters():
 
     return corpus, vocab
 
-
-
-def save_pretrained(vocab,embeds,save_path):
-    with open(save_path,"w") as writer:
-        writer.write(f"{embeds.shape[0]}{embeds.shape[1]}\n")
-        for idx,token in enumerate(vocab.idx_to_token):
+def save_pretrained(vocab, embeds, save_path):
+    """
+    Save pretrained token vectors in a unified format, where the first line
+    specifies the `number_of_tokens` and `embedding_dim` followed with all
+    token vectors, one token per line.
+    """
+    with open(save_path, "w") as writer:
+        writer.write(f"{embeds.shape[0]} {embeds.shape[1]}\n")
+        for idx, token in enumerate(vocab.idx_to_token):
             vec = " ".join(["{:.4f}".format(x) for x in embeds[idx]])
             writer.write(f"{token} {vec}\n")
-
-        print(f"Pretrained embeddings saved to :{save_path}")
-
-
-
+    print(f"Pretrained embeddings saved to: {save_path}")
 
 def load_pretrained(load_path):
-
-
-
-    with open(load_path,'r') as fin:
-        #n,d = map(int,fin.readline().split())
+    with open(load_path, "r") as fin:
+        # Optional: depending on the specific format of pretrained vector file
+        n, d = map(int, fin.readline().split())
         tokens = []
         embeds = []
         for line in fin:
             line = line.rstrip().split(' ')
-
-            token,embed = line[0],list(map(float,line[1:]))
+            token, embed = line[0], list(map(float, line[1:]))
             tokens.append(token)
             embeds.append(embed)
-
         vocab = Vocab(tokens)
-        embeds = torch.tensor(embeds,dtype=torch.float)
+        embeds = torch.tensor(embeds, dtype=torch.float)
+    return vocab, embeds
 
-    return vocab,embeds
-
-
-
-def get_loader(dataset,batch_size,shuffle=True):
+def get_loader(dataset, batch_size, shuffle=True):
     data_loader = DataLoader(
-        dataset=dataset,
+        dataset,
         batch_size=batch_size,
         collate_fn=dataset.collate_fn,
         shuffle=shuffle
     )
     return data_loader
 
-
 def init_weights(model):
-    for name,param in model.named_parameters():
+    for name, param in model.named_parameters():
         if "embedding" not in name:
             torch.nn.init.uniform_(
-                param,a=-WEIGHT_INIT_RANGE,b=WEIGHT_INIT_RANGE
+                param, a=-WEIGHT_INIT_RANGE, b=WEIGHT_INIT_RANGE
             )
